@@ -1,3 +1,12 @@
+# Yacc + lex
+y.tab.c
+y.tab.h
+lex.yy.c
+parser
+
+# Mac
+.DS_Store
+
 # Object files
 *.o
 *.ko
