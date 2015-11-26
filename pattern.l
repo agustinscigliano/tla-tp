@@ -1,10 +1,13 @@
 %{
     #include <stdlib.h>
     #include "y.tab.h"
+    #include "objects.h"
     void yyerror(char *);
 %}
+
 letter [A-Za-z]
 digit [0-9]
+varname [_|{letter}|{digit}]+
 
 %%
 
@@ -25,7 +28,6 @@ digit [0-9]
 "while"     return WHILE;
 "if"        return IF;
 "else"      return ELSE;
-"print"     return PRINT;
 [ \t]       ;
 .           yyerror("invalid character");
 %%
