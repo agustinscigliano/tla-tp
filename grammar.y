@@ -1,6 +1,6 @@
 %token <intval> INTEGER
 %token <stindex> VARIABLE
-%token WHILE IF
+%token WHILE IF SHOW
 %nonassoc IFX
 %nonassoc ELSE
 
@@ -51,6 +51,7 @@ stmt:
     | IF '(' expr ')' stmt %prec IFX   {$$ = newOpNode(IF, 2, $3, $5);}
     | IF '(' expr ')' stmt ELSE stmt   {$$ = newOpNode(IF, 3, $3, $5, $7);}
     | '{' stmt_list '}'                {$$ = $2;}
+    | SHOW expr ';'                    {$$ = newOpNode(SHOW, 1, $2);}
     ;
 
 stmt_list:
@@ -134,6 +135,9 @@ return np;
 
 void
 freeNode(Node *np){
+    if(!np)
+        return;
+
     if(np->type == OPER){
         for(int i = 0; i < np->opn.nops; i++)
             freeNode(np->opn.ops[i]);
@@ -162,6 +166,8 @@ execute(Node *np){
                         return 0;
         case ';':       execute(np->opn.ops[0]);
                         return execute(np->opn.ops[1]);
+        case SHOW:      printf("%d\n", execute(np->opn.ops[0]));
+                        return 0;
         case '=':       return sym[np->opn.ops[0]->idn.i] = execute(np->opn.ops[1]);
         case UMINUS:    return -execute(np->opn.ops[0]);
         case '+':       return execute(np->opn.ops[0]) + execute(np->opn.ops[1]);

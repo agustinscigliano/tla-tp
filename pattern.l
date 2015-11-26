@@ -11,25 +11,29 @@ varname [_|{letter}|{digit}]+
 
 %%
 
-[a-z]       {
-                yylval.stindex = *yytext - 'a';
-                return VARIABLE;
-            }
-
-[0-9]+      {
-                yylval.intval = atoi(yytext);
-                return INTEGER;
-            }
-[-+()=/*\n] {return *yytext;}
-">="        return GE;
-"<="        return LE;
-"=="        return EQ;
-"!="        return NE;
-"while"     return WHILE;
-"if"        return IF;
-"else"      return ELSE;
-[ \t]       ;
-.           yyerror("invalid character");
+[a-z]           {
+                    yylval.stindex = *yytext - 'a';
+                    return VARIABLE;
+                }
+0               {
+                    yylval.intval = atoi(yytext);
+                    return INTEGER;
+                }
+[1-9][0-9]*     {
+                    yylval.intval = atoi(yytext);
+                    return INTEGER;
+                }
+[-+()<>=/*{};.] {return *yytext;}
+">="            return GE;
+"<="            return LE;
+"=="            return EQ;
+"!="            return NE;
+"while"         return WHILE;
+"if"            return IF;
+"else"          return ELSE;
+"show"          return SHOW;
+[ \t\n]         ;
+.               yyerror("invalid character");
 %%
 
 int
