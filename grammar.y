@@ -50,8 +50,8 @@ fn:
 
 stmt:
     ';'                                {$$ = newOpNode(';', 2, NULL, NULL);}
-    | expr ';'                         {$$ = $1;}
-    | VARIABLE '=' expr ';'            {$$ = newOpNode('=', 2, newIdNode($1), $3);}
+    | expr ';'                         {$$ = newOpNode(';',1,$1);}
+    | VARIABLE '=' expr                {$$ = newOpNode('=', 2, newIdNode($1), $3);}
     | WHILE '(' expr ')' stmt          {$$ = newOpNode(WHILE, 2, $3, $5);}
     | IF '(' expr ')' stmt %prec IFX   {$$ = newOpNode(IF, 2, $3, $5);}
     | IF '(' expr ')' stmt ELSE stmt   {$$ = newOpNode(IF, 3, $3, $5, $7);}
@@ -133,56 +133,113 @@ freeNode(Node *np){
     free(np);
 }
 
-int
-execute(Node *np){
-    if(!np)
-        return 0;
+int execute(Node *np) {
 
-switch(np->type){
-    case CONST: return np->cn.value;
-    case ID:    
-            aux = lookup(st, 0, np->idn.name, NULL);
+    if (!np) return 0;
+    switch(np->type) {
+    case CONST:       
+        printf("%d ", np->cn.value); 
+        break;
+    case ID:
+        aux = lookup(st, 0, np->idn.name, NULL);
             if(aux == NULL){
-                printf("aux = NULL1\n");
-                return 0;
+                printf("int %s ",np->idn.name);
+            } else {
+                printf("%s ",np->idn.name);
             }
-            return *aux;
+        break;
     case OPER:
-        switch(np->opn.oper){
-        case WHILE:     while(execute(np->opn.ops[0]))
-                        execute(np->opn.ops[1]); 
-                        return 0;
-        case IF:        if(execute(np->opn.ops[0]))
-                            execute(np->opn.ops[1]);
-                        else if(np->opn.nops > 2)
-                            execute(np->opn.ops[2]);
-                        return 0;
-        case ';':       execute(np->opn.ops[0]);
-                        return execute(np->opn.ops[1]);
-        case SHOW:      
-                        printf("%d\n", execute(np->opn.ops[0]));
-                        return 0;
-        case '=':       
-                        auxint = execute(np->opn.ops[1]);
-                        aux = lookup(st, 1, np->opn.ops[0]->idn.name, &auxint);
-                        if(aux == NULL){
-                            printf("aux = NULL2\n");
-                            return 0;
-                        }
-                        return *aux;
-        case UMINUS:    return -execute(np->opn.ops[0]);
-        case '+':       return execute(np->opn.ops[0]) + execute(np->opn.ops[1]);
-        case '-':       return execute(np->opn.ops[0]) - execute(np->opn.ops[1]);
-        case '*':       return execute(np->opn.ops[0]) * execute(np->opn.ops[1]);
-        case '/':       return execute(np->opn.ops[0]) / execute(np->opn.ops[1]);
-        case '<':       return execute(np->opn.ops[0]) < execute(np->opn.ops[1]);
-        case '>':       return execute(np->opn.ops[0]) > execute(np->opn.ops[1]);
-        case GE:        return execute(np->opn.ops[0]) >= execute(np->opn.ops[1]);
-        case LE:        return execute(np->opn.ops[0]) <= execute(np->opn.ops[1]);
-        case NE:        return execute(np->opn.ops[0]) != execute(np->opn.ops[1]);
-        case EQ:        return execute(np->opn.ops[0]) == execute(np->opn.ops[1]);
+        switch(np->opn.oper) {
+        case WHILE:
+            printf("while (");
+            execute(np->opn.ops[0]);
+            printf(")\n { \n");
+            execute(np->opn.ops[1]);
+            printf("} \n");
+            break;
+        case IF:
+            printf("if (");
+            execute(np->opn.ops[0]);
+            printf(") \n {");
+            execute(np->opn.ops[1]);
+            printf("} else ");
+            if(np->opn.nops > 2) {
+            execute(np->opn.ops[2]);
+            } else {
+            printf(" { ");
+            printf("} \n");
+            }
+            break;
+            
+        case SHOW:
+            break;
+        case '=':
+            execute(np->opn.ops[0]);
+            printf(" = ");
+            execute(np->opn.ops[1]);
+            break;
+        case UMINUS:
+            printf("-");
+            execute(np->opn.ops[0]);   
+            break;
+        case ';':
+            execute(np->opn.ops[0]);
+            printf("; \n");
+            break;
+        case '+':
+        execute(np->opn.ops[0]);
+            printf(" + ");
+            execute(np->opn.ops[1]);
+            break;
+        case '-':
+        execute(np->opn.ops[0]);
+            printf(" - ");
+            execute(np->opn.ops[1]);
+            break;
+        case '*': 
+              execute(np->opn.ops[0]);
+            printf(" * ");
+            execute(np->opn.ops[1]);
+            break;
+        case '/':
+               execute(np->opn.ops[0]);
+            printf(" / ");
+            execute(np->opn.ops[1]);
+            break;
+        case '<':
+        execute(np->opn.ops[0]);
+            printf(" < ");
+            execute(np->opn.ops[1]);
+            break;
+        case '>':
+        execute(np->opn.ops[0]);
+            printf(" > ");
+            execute(np->opn.ops[1]);
+            break;
+        case GE:
+        execute(np->opn.ops[0]);
+            printf(" >= ");
+            execute(np->opn.ops[1]);
+            break;
+        case LE:
+        execute(np->opn.ops[0]);
+            printf(" <= ");
+            execute(np->opn.ops[1]);
+            break;
+        case NE:
+        execute(np->opn.ops[0]);
+            printf(" != ");
+            execute(np->opn.ops[1]);
+            break;
+        case EQ:
+        execute(np->opn.ops[0]);
+            printf(" == ");
+            execute(np->opn.ops[1]);
+            break;
+        default:
+            break;
+            }
         }
-    }
     return 0;
 }
 
