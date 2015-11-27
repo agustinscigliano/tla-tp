@@ -215,6 +215,9 @@ switch(np->type){
         case SHOW:
             break;
         case '=':
+            auxvar = lookup(st, 0, np->opn.ops[0]->idn.name, NULL);
+            if(auxvar == NULL)
+                die("variable %s undeclared\n", np->opn.ops[0]->idn.name);
             execute(np->opn.ops[0]);
             printf(" = ");
             execute(np->opn.ops[1]);

@@ -12,7 +12,7 @@
 typedef struct Node Node;
 struct Node{
 	char *key;
-	int *value;
+	void *value;
 	Node *next;
 };
 
@@ -49,8 +49,8 @@ freesymboltable(Symtab *table){
 /* lookup with optional insertion
  * See: The practice of programming, page 56
  */
-int *
-lookup(Symtab *table, int insert, char *key, int *value){
+Variable *
+lookup(Symtab *table, int insert, char *key, void *value){
 	unsigned long h = hash(key, table->size);
 	Node *np = findnode(table->buckets[h], key);
 
@@ -58,7 +58,7 @@ lookup(Symtab *table, int insert, char *key, int *value){
 		if(insert){
 			np         = xmalloc(sizeof(*np));
 			np->value  = xmalloc(sizeof(np->value)); 
-			*np->value = *value;
+			np->value  = value;
 			np->key    = strdup(key);
 			np->next   = table->buckets[h];
 			table->buckets[h] = np;
@@ -70,7 +70,7 @@ lookup(Symtab *table, int insert, char *key, int *value){
 		return NULL;
 	}
 	if(insert)
-		*np->value = *value;
+		np->value = value;
 	return np->value;
 }
 

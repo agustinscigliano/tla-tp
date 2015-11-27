@@ -1,4 +1,6 @@
-typedef enum {ID_NODE, OPER_NODE, INT_NODE, FLOAT64_NODE, STRING_NODE} NodeTypeEnum;
+typedef enum {
+	ID_NODE, OPER_NODE, INT_NODE, FLOAT64_NODE, STRING_NODE
+} NodeTypeEnum;
 
 typedef struct Node Node;
 
