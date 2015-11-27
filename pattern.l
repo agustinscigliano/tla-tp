@@ -11,11 +11,16 @@ float64 [0-9]+\.[0-9]+
 
 %%
 
+"main"          return MAIN;
 "show"          return SHOW;
 ">="            return GE;
 "<="            return LE;
 "=="            return EQ;
 "!="            return NE;
+"++"            return INC;
+"--"            return DEC;
+"+="            return ADDEQ;
+"-="            return SUBEQ;
 "while"         return WHILE;
 "if"            return IF;
 "else"          return ELSE;
