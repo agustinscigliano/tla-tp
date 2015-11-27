@@ -3,6 +3,18 @@ typedef enum {
 } NodeTypeEnum;
 
 typedef struct Node Node;
+typedef enum VarTypeEnum VarTypeEnum;
+
+enum VarTypeEnum {INTEGER_T, FLOAT64_T, STRING_T};
+
+typedef struct {
+	VarTypeEnum type;
+	union {
+		int integer;
+		double float64;
+		char *string;
+	};
+} Variable;
 
 typedef struct {
 	int oper;

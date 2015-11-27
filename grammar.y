@@ -2,6 +2,7 @@
 %token <stindex> VARIABLE
 %token <string>    STRING
 %token <doubleval> FLOAT64
+%token <varType> TYPE
 %token MAIN WHILE IF SHOW ADDEQ SUBEQ INC DEC
 %nonassoc IFX
 %nonassoc ELSE
@@ -31,6 +32,8 @@ void freeNode(Node *np);
 Node *newIdNode(const char *id);
 Node *newOpNode(int operator, int nops, ...);
 int execute(Node *np);
+void declareVariable(VarTypeEnum varType, char *varName);
+Variable* newVariable(VarTypeEnum varType);
 
 static int *aux;
 static int auxint;
@@ -43,6 +46,7 @@ static int indentation;
     int intval;         /* integer value */
     double doubleval;
     char *string;
+    enum VarTypeEnum varType;
     struct Node *np;
 };
 %%
@@ -61,7 +65,7 @@ prestmt:
     ;
 
 main:
-    MAIN '(' ')' stmt     {$$ = $4;}
+    MAIN '(' ')' '{' stmt_list '}'                {$$ = newOpNode(MAIN, 1, $5);}
     ;
 
 stmt:
@@ -87,6 +91,7 @@ expr:
     | FLOAT64           {$$ = newFloat64Node($1);}
     | STRING            {$$ = newStringNode($1);}
     | VARIABLE          {$$ = newIdNode($1);}
+    | TYPE VARIABLE     {declareVariable($1, $2);}
     | '-' expr %prec UMINUS     {$$ = newOpNode(UMINUS, 1, $2);}
     | INC expr %prec INC        {$$ = newOpNode(INC, 1, $2);}
     | DEC expr %prec DEC        {$$ = newOpNode(DEC, 1, $2);}
@@ -195,6 +200,11 @@ switch(np->type){
         break;
     case OPER_NODE:
         switch(np->opn.oper) {
+        case MAIN:
+            printf("int main(void) {\n");
+            execute(np->opn.ops[0]);
+            printf("}\n");
+            break;
         case WHILE:
             printf("while (");
             execute(np->opn.ops[0]);
@@ -310,6 +320,22 @@ switch(np->type){
             }
         }
     return 0;
+}
+
+void
+declareVariable(VarTypeEnum varType, char *varName) {
+    Variable var = lookup(st, 0, varName, NULL);
+    if (var != NULL) {
+        die("Error: variable ya definida");
+    }
+    lookup(st, 1, varName, newVariable(varType));
+}
+
+Variable*
+newVariable(VarTypeEnum varType) {
+    Variable *vp = xmalloc(sizeof(*vp));
+    vp->type = varType;
+    return vp;
 }
 
 void 
