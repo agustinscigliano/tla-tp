@@ -62,7 +62,7 @@ stmt:
     | WHILE '(' expr ')' stmt          {$$ = newOpNode(WHILE, 2, $3, $5);}
     | IF '(' expr ')' stmt %prec IFX   {$$ = newOpNode(IF, 2, $3, $5);}
     | IF '(' expr ')' stmt ELSE stmt   {$$ = newOpNode(IF, 3, $3, $5, $7);}
-    | '{' stmt_list '}'                {$$ = $2;}
+    | '{' stmt_list '}'                {$$ = newOpNode('{',1,$2);}
     | SHOW expr ';'                    {$$ = newOpNode(SHOW, 1, $2);}
     ;
 
@@ -192,15 +192,12 @@ switch(np->type){
         case IF:
             printf("if (");
             execute(np->opn.ops[0]);
-            printf(") \n {");
+            printf(") \n ");
             execute(np->opn.ops[1]);
-            printf("} else ");
             if(np->opn.nops > 2) {
+            printf("else ");
             execute(np->opn.ops[2]);
-            } else {
-            printf(" { ");
-            printf("} \n");
-            }
+                } 
             break;
             
         case SHOW:
@@ -214,6 +211,10 @@ switch(np->type){
             printf("-");
             execute(np->opn.ops[0]);   
             break;
+        case '{':
+            printf("{");
+            execute(np->opn.ops[0]);
+            printf("}");
         case ';':
             execute(np->opn.ops[0]);
             printf("; \n");
