@@ -54,22 +54,24 @@ lookup(Symtab *table, int insert, char *key, int *value){
 	unsigned long h = hash(key, table->size);
 	Node *np = findnode(table->buckets[h], key);
 
-	if(np)
-		return np->value;
-	if(insert){
-		np        = xmalloc(sizeof(*np));
-		np->value = xmalloc(sizeof(np->value)); 
-		*np->value = *value;
-		np->key   = strdup(key);
-		np->next  = table->buckets[h];
-		table->buckets[h] = np;
-		table->entries++;
-		if(mustexpand(table))
-			expandtable(table);
-		return np->value;
+	if(!np){
+		if(insert){
+			np         = xmalloc(sizeof(*np));
+			np->value  = xmalloc(sizeof(np->value)); 
+			*np->value = *value;
+			np->key    = strdup(key);
+			np->next   = table->buckets[h];
+			table->buckets[h] = np;
+			table->entries++;
+			if(mustexpand(table))
+				expandtable(table);
+			return np->value;
+		}
+		return NULL;
 	}
-
-	return NULL;
+	if(insert)
+		*np->value = *value;
+	return np->value;
 }
 
 static Node*
