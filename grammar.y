@@ -32,9 +32,10 @@ Node *newIdNode(const char *id);
 Node *newOpNode(int operator, int nops, ...);
 int execute(Node *np);
 
-int *aux;
-int auxint;
-Symtab *st;
+static int *aux;
+static int auxint;
+static Symtab *st;
+static int indentation;
 %}
 
 %union {
@@ -57,12 +58,12 @@ fn:
 
 stmt:
     ';'                                {$$ = newOpNode(';', 2, NULL, NULL);}
-    | expr ';'                         {$$ = newOpNode(';',1,$1);}
-    | VARIABLE '=' expr                {$$ = newOpNode('=', 2, newIdNode($1), $3);}
+    | expr ';'                         {$$ = newOpNode(';', 1, $1);}
+    | VARIABLE '=' expr ';'            {$$ = newOpNode('=', 2, newIdNode($1), $3);}
     | WHILE '(' expr ')' stmt          {$$ = newOpNode(WHILE, 2, $3, $5);}
     | IF '(' expr ')' stmt %prec IFX   {$$ = newOpNode(IF, 2, $3, $5);}
     | IF '(' expr ')' stmt ELSE stmt   {$$ = newOpNode(IF, 3, $3, $5, $7);}
-    | '{' stmt_list '}'                {$$ = newOpNode('{',1,$2);}
+    | '{' stmt_list '}'                {$$ = newOpNode('{', 1, $2);}
     | SHOW expr ';'                    {$$ = newOpNode(SHOW, 1, $2);}
     ;
 
@@ -192,14 +193,13 @@ switch(np->type){
         case IF:
             printf("if (");
             execute(np->opn.ops[0]);
-            printf(") \n ");
+            printf(")");
             execute(np->opn.ops[1]);
             if(np->opn.nops > 2) {
-            printf("else ");
-            execute(np->opn.ops[2]);
-                } 
+                printf("else ");
+                execute(np->opn.ops[2]);
+            } 
             break;
-            
         case SHOW:
             break;
         case '=':
@@ -212,15 +212,18 @@ switch(np->type){
             execute(np->opn.ops[0]);   
             break;
         case '{':
-            printf("{");
+            printf("{\n\t");
             execute(np->opn.ops[0]);
             printf("}");
+            break;
         case ';':
-            execute(np->opn.ops[0]);
-            printf("; \n");
+            for(int i = 0; i < np->opn.nops; i++){
+                execute(np->opn.ops[i]);
+                printf("; \n");
+            }
             break;
         case '+':
-        execute(np->opn.ops[0]);
+            execute(np->opn.ops[0]);
             printf(" + ");
             execute(np->opn.ops[1]);
             break;
@@ -230,17 +233,17 @@ switch(np->type){
             execute(np->opn.ops[1]);
             break;
         case '*': 
-              execute(np->opn.ops[0]);
+            execute(np->opn.ops[0]);
             printf(" * ");
             execute(np->opn.ops[1]);
             break;
         case '/':
-               execute(np->opn.ops[0]);
+            execute(np->opn.ops[0]);
             printf(" / ");
             execute(np->opn.ops[1]);
             break;
         case '<':
-        execute(np->opn.ops[0]);
+            execute(np->opn.ops[0]);
             printf(" < ");
             execute(np->opn.ops[1]);
             break;
@@ -288,6 +291,7 @@ yyerror(const char *errstr, ...) {
 
 int 
 main(void) {
+    indentation = 0;
     st = newsymboltable();
     yyparse();
     return 0;
