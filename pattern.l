@@ -6,6 +6,8 @@
 %}
 
 varname [a-zA-Z][a-zA-Z0-9]*
+number [1-9][0-9]*
+float64 [0-9]+\.[0-9]+
 
 %%
 
@@ -25,9 +27,13 @@ varname [a-zA-Z][a-zA-Z0-9]*
                     yylval.intval = atoi(yytext);
                     return INTEGER;
                 }
-[1-9][0-9]*     {
+{number}        {
                     yylval.intval = atoi(yytext);
                     return INTEGER;
+                }
+{float64}       {
+                    yylval.doubleval = atof(yytext);
+                    return FLOAT64;
                 }
 [-+()<>=/*{};.] {return *yytext;}
 [ \t\n]         ;

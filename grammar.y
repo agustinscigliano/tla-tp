@@ -1,5 +1,7 @@
-%token <intval> INTEGER
-%token <stindex> VARIABLE
+%token <intval>    INTEGER
+%token <stindex>   VARIABLE
+%token <string>    STRING
+%token <doubleval> FLOAT64
 %token WHILE IF SHOW
 %nonassoc IFX
 %nonassoc ELSE
@@ -15,14 +17,17 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <math.h>
 #include "util.h"
 #include "symtab.h"
 #include "objects.h"
 
 void yyerror(const char *errstr, ...);
 int yylex(void);
+Node *newIntNode(int value);
+Node *newFloat64Node(double value);
+Node *newStringNode(char *s);
 void freeNode(Node *np);
-Node *newConstNode(int value);
 Node *newIdNode(const char *id);
 Node *newOpNode(int operator, int nops, ...);
 int execute(Node *np);
@@ -33,8 +38,10 @@ Symtab *st;
 %}
 
 %union {
-    char *stindex; /* symbol table index */
-    int intval;   /* integer value */
+    char *stindex;      /* symbol table index */
+    int intval;         /* integer value */
+    double doubleval;
+    char *string;
     struct Node *np;
 };
 %%
@@ -65,7 +72,9 @@ stmt_list:
          ;
 
 expr:
-    INTEGER             {$$ = newConstNode($1);}
+    INTEGER             {$$ = newIntNode($1);}
+    | FLOAT64           {$$ = newFloat64Node($1);}
+    | STRING            {$$ = newStringNode($1);}
     | VARIABLE          {$$ = newIdNode($1);}
     | '-' expr %prec UMINUS {$$ = newOpNode(UMINUS, 1, $2);}
     | expr '+' expr             {$$ = newOpNode('+', 2, $1, $3);}
@@ -84,18 +93,36 @@ expr:
 /*--------------------------------------------------------*/
 
 Node *
-newConstNode(int value){
-    Node *np     = xmalloc(sizeof(*np));
-    np->type     = CONST;
-    np->cn.value = value;
+newIntNode(int value){
+    Node *np       = xmalloc(sizeof(*np));
+    np->type       = INT_NODE;
+    np->in.integer = value;
+
+    return np;
+}
+
+Node *
+newFloat64Node(double value){
+    Node *np         = xmalloc(sizeof(*np));
+    np->type         = FLOAT64_NODE;
+    np->f64n.float64 = value;
+
+    return np;
+}
+
+Node *
+newStringNode(char *s){
+    Node *np      = xmalloc(sizeof(*np));
+    np->type      = STRING_NODE;
+    np->sn.string = s;
 
     return np;
 }
 
 Node *
 newIdNode(const char *id){
-    Node *np = xmalloc(sizeof(*np));
-    np->type = ID;
+    Node *np     = xmalloc(sizeof(*np));
+    np->type     = ID_NODE;
     np->idn.name = strdup(id);
 
     return np;
@@ -107,7 +134,7 @@ newOpNode(int operator, int nops, ...){
 
     Node *np = xmalloc(sizeof(*np));
     np->opn.ops = xmalloc(nops * sizeof(np->opn.ops));
-    np->type = OPER;
+    np->type = OPER_NODE;
     np->opn.oper = operator;
     np->opn.nops = nops;
     va_start(ap, nops);
@@ -123,11 +150,11 @@ freeNode(Node *np){
     if(!np)
         return;
 
-    if(np->type == OPER){
+    if(np->type == OPER_NODE){
         for(int i = 0; i < np->opn.nops; i++)
             freeNode(np->opn.ops[i]);
         free(np->opn.ops);
-    } else if(np->type == ID){
+    } else if(np->type == ID_NODE){
         free(np->idn.name);
     }
     free(np);
@@ -139,15 +166,18 @@ execute(Node *np){
         return 0;
 
 switch(np->type){
-    case CONST: return np->cn.value;
-    case ID:    
+    case INT_NODE: return np->in.integer;
+    case FLOAT64_NODE: 
+            return ceil(np->f64n.float64);
+    case STRING_NODE: return *np->sn.string;
+    case ID_NODE:    
             aux = lookup(st, 0, np->idn.name, NULL);
             if(aux == NULL){
                 printf("aux = NULL1\n");
                 return 0;
             }
             return *aux;
-    case OPER:
+    case OPER_NODE:
         switch(np->opn.oper){
         case WHILE:     while(execute(np->opn.ops[0]))
                         execute(np->opn.ops[1]); 
@@ -185,7 +215,6 @@ switch(np->type){
     }
     return 0;
 }
-
 
 void 
 yyerror(const char *errstr, ...) {
