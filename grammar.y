@@ -1,17 +1,17 @@
-%token <intval>    INTEGER
-%token <stindex>   VARIABLE
+%token <intval> INTEGER
+%token <stindex> VARIABLE
 %token <string>    STRING
 %token <doubleval> FLOAT64
-%token WHILE IF SHOW
+%token MAIN WHILE IF SHOW ADDEQ SUBEQ INC DEC
 %nonassoc IFX
 %nonassoc ELSE
 
 %left GE LE EQ NE '>' '<'
 %left '+' '-'
 %left '*' '/'
-%nonassoc UMINUS
+%nonassoc UMINUS INC DEC
 
-%type <np> stmt expr stmt_list
+%type <np> fn stmt expr stmt_list prestmt main
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,12 +51,22 @@ program:
        ;
 
 fn:
-  fn stmt { execute($2); freeNode($2); }
-  | /* LAMBDA */
-  ;
+    prestmt fn  {execute($1); execute($2); freeNode($1); freeNode($2);}
+    | main      
+    ;
+
+prestmt:
+    VARIABLE '=' expr ';'              {$$ = newOpNode('=', 2, newIdNode($1), $3);}
+    ;
+
+main:
+    MAIN '(' ')' stmt     {$$ = $4;}
+    ;
 
 stmt:
     ';'                                {$$ = newOpNode(';', 2, NULL, NULL);}
+    | VARIABLE ADDEQ expr ';'          {$$ = newOpNode(ADDEQ, 2, newIdNode($1), $3);}
+    | VARIABLE SUBEQ expr ';'          {$$ = newOpNode(SUBEQ, 2, newIdNode($1), $3);}
     | expr ';'                         {$$ = newOpNode(';',1,$1);}
     | VARIABLE '=' expr                {$$ = newOpNode('=', 2, newIdNode($1), $3);}
     | WHILE '(' expr ')' stmt          {$$ = newOpNode(WHILE, 2, $3, $5);}
@@ -76,7 +86,9 @@ expr:
     | FLOAT64           {$$ = newFloat64Node($1);}
     | STRING            {$$ = newStringNode($1);}
     | VARIABLE          {$$ = newIdNode($1);}
-    | '-' expr %prec UMINUS {$$ = newOpNode(UMINUS, 1, $2);}
+    | '-' expr %prec UMINUS     {$$ = newOpNode(UMINUS, 1, $2);}
+    | INC expr %prec INC        {$$ = newOpNode(INC, 1, $2);}
+    | DEC expr %prec DEC        {$$ = newOpNode(DEC, 1, $2);}
     | expr '+' expr             {$$ = newOpNode('+', 2, $1, $3);}
     | expr '-' expr             {$$ = newOpNode('-', 2, $1, $3);}
     | expr '*' expr             {$$ = newOpNode('*', 2, $1, $3);}
@@ -269,6 +281,24 @@ switch(np->type){
             printf(" == ");
             execute(np->opn.ops[1]);
             break;
+        case ADDEQ:
+            execute(np->opn.ops[0]);
+            printf(" += ");
+            execute(np->opn.ops[1]);
+            break;
+        case SUBEQ:
+            execute(np->opn.ops[0]);
+            printf(" -= ");
+            execute(np->opn.ops[1]);
+            break;
+        case INC:
+            printf("++");
+            execute(np->opn.ops[0]);   
+            break;
+        case DEC: 
+            printf("--");
+            execute(np->opn.ops[0]);   
+            break;
         default:
             break;
             }
@@ -278,12 +308,12 @@ switch(np->type){
 
 void 
 yyerror(const char *errstr, ...) {
-	va_list ap;
+    va_list ap;
 
-	va_start(ap, errstr);
-	vfprintf(stderr, errstr, ap);
-	fprintf(stderr, "\n");
-	va_end(ap);
+    va_start(ap, errstr);
+    vfprintf(stderr, errstr, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
 }
 
 int 
