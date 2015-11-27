@@ -19,6 +19,7 @@ float64 [0-9]+\.[0-9]+
 "while"         return WHILE;
 "if"            return IF;
 "else"          return ELSE;
+\".*\"          return STRING;
 {varname}       {
                     yylval.stindex = strdup(yytext);
                     return VARIABLE;
