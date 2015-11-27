@@ -1,4 +1,4 @@
-typedef enum {ID, OPER, CONST} TypeEnum;
+typedef enum {ID_NODE, OPER_NODE, INT_NODE, FLOAT64_NODE, STRING_NODE} NodeTypeEnum;
 
 typedef struct Node Node;
 
@@ -9,18 +9,28 @@ typedef struct {
 } OpNode;
 
 typedef struct {
-	int value;
-} ConstNode;
+	int integer;
+} IntNode;
+
+typedef struct {
+	double float64;
+} Float64Node;
+
+typedef struct {
+	char *string;
+} StringNode;
 
 typedef struct {
 	char *name;
 } IdNode;
 
 struct Node {
-	TypeEnum type;
+	NodeTypeEnum type;
 
     union {
-        ConstNode cn;
+        IntNode in;
+		Float64Node f64n;
+		StringNode sn;
         IdNode idn;
         OpNode opn;
     };
