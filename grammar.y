@@ -14,21 +14,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
+#include "util.h"
+#include "symtab.h"
 #include "objects.h"
 
-void yyerror(char *);
+void yyerror(const char *errstr, ...);
 int yylex(void);
-int sym[26];
-
 void freeNode(Node *np);
 Node *newConstNode(int value);
-Node *newIdNode(int id);
+Node *newIdNode(const char *id);
 Node *newOpNode(int operator, int nops, ...);
 int execute(Node *np);
+
+int *aux;
+int auxint;
+Symtab *st;
 %}
 
 %union {
-    char stindex; /* symbol table index */
+    char *stindex; /* symbol table index */
     int intval;   /* integer value */
     struct Node *np;
 };
@@ -78,49 +83,29 @@ expr:
 %%
 /*--------------------------------------------------------*/
 
-void
-die(const char *errstr, ...) {
-    va_list ap;
-
-va_start(ap, errstr);
-    vfprintf(stderr, errstr, ap);
-    va_end(ap);
-    exit(EXIT_FAILURE);
-}
-
-void *
-xmalloc(size_t size) {
-    void *p = malloc(size);
-
-if(!p)
-        die("Out of memory: could not malloc() %d bytes\n", size);
-
-return p;
-}
-
 Node *
 newConstNode(int value){
     Node *np     = xmalloc(sizeof(*np));
     np->type     = CONST;
     np->cn.value = value;
 
-return np;
+    return np;
 }
 
 Node *
-newIdNode(int id){
+newIdNode(const char *id){
     Node *np = xmalloc(sizeof(*np));
     np->type = ID;
-    np->idn.i = id;
+    np->idn.name = strdup(id);
 
-return np;
+    return np;
 }
 
 Node *
 newOpNode(int operator, int nops, ...){
     va_list ap;
 
-Node *np = xmalloc(sizeof(*np));
+    Node *np = xmalloc(sizeof(*np));
     np->opn.ops = xmalloc(nops * sizeof(np->opn.ops));
     np->type = OPER;
     np->opn.oper = operator;
@@ -130,7 +115,7 @@ Node *np = xmalloc(sizeof(*np));
         np->opn.ops[i] = va_arg(ap, Node*);
     va_end(ap);
 
-return np;
+    return np;
 }
 
 void
@@ -142,6 +127,8 @@ freeNode(Node *np){
         for(int i = 0; i < np->opn.nops; i++)
             freeNode(np->opn.ops[i]);
         free(np->opn.ops);
+    } else if(np->type == ID){
+        free(np->idn.name);
     }
     free(np);
 }
@@ -151,9 +138,15 @@ execute(Node *np){
     if(!np)
         return 0;
 
-    switch(np->type){
+switch(np->type){
     case CONST: return np->cn.value;
-    case ID:    return sym[np->idn.i];
+    case ID:    
+            aux = lookup(st, 0, np->idn.name, NULL);
+            if(aux == NULL){
+                printf("aux = NULL1\n");
+                return 0;
+            }
+            return *aux;
     case OPER:
         switch(np->opn.oper){
         case WHILE:     while(execute(np->opn.ops[0]))
@@ -166,9 +159,17 @@ execute(Node *np){
                         return 0;
         case ';':       execute(np->opn.ops[0]);
                         return execute(np->opn.ops[1]);
-        case SHOW:      printf("%d\n", execute(np->opn.ops[0]));
+        case SHOW:      
+                        printf("%d\n", execute(np->opn.ops[0]));
                         return 0;
-        case '=':       return sym[np->opn.ops[0]->idn.i] = execute(np->opn.ops[1]);
+        case '=':       
+                        auxint = execute(np->opn.ops[1]);
+                        aux = lookup(st, 1, np->opn.ops[0]->idn.name, &auxint);
+                        if(aux == NULL){
+                            printf("aux = NULL2\n");
+                            return 0;
+                        }
+                        return *aux;
         case UMINUS:    return -execute(np->opn.ops[0]);
         case '+':       return execute(np->opn.ops[0]) + execute(np->opn.ops[1]);
         case '-':       return execute(np->opn.ops[0]) - execute(np->opn.ops[1]);
@@ -187,13 +188,18 @@ execute(Node *np){
 
 
 void 
-yyerror(char *errormessage) {
-    fprintf(stderr, "%s\n", errormessage);
+yyerror(const char *errstr, ...) {
+	va_list ap;
+
+	va_start(ap, errstr);
+	vfprintf(stderr, errstr, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
 }
 
 int 
 main(void) {
+    st = newsymboltable();
     yyparse();
     return 0;
 }
-

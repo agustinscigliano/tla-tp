@@ -13,7 +13,7 @@ typedef struct {
 } ConstNode;
 
 typedef struct {
-	int i;
+	char *name;
 } IdNode;
 
 struct Node {
@@ -25,5 +25,3 @@ struct Node {
         OpNode opn;
     };
 };
-
-extern int sym[26];

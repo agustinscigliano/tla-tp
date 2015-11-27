@@ -2,17 +2,23 @@
     #include <stdlib.h>
     #include "y.tab.h"
     #include "objects.h"
-    void yyerror(char *);
+    void yyerror(const char *errstr, ...);
 %}
 
-letter [A-Za-z]
-digit [0-9]
-varname [_|{letter}|{digit}]+
+varname [a-zA-Z][a-zA-Z0-9]*
 
 %%
 
-[a-z]           {
-                    yylval.stindex = *yytext - 'a';
+"show"          return SHOW;
+">="            return GE;
+"<="            return LE;
+"=="            return EQ;
+"!="            return NE;
+"while"         return WHILE;
+"if"            return IF;
+"else"          return ELSE;
+{varname}       {
+                    yylval.stindex = strdup(yytext);
                     return VARIABLE;
                 }
 0               {
@@ -24,16 +30,8 @@ varname [_|{letter}|{digit}]+
                     return INTEGER;
                 }
 [-+()<>=/*{};.] {return *yytext;}
-">="            return GE;
-"<="            return LE;
-"=="            return EQ;
-"!="            return NE;
-"while"         return WHILE;
-"if"            return IF;
-"else"          return ELSE;
-"show"          return SHOW;
 [ \t\n]         ;
-.               yyerror("invalid character");
+.               yyerror("invalid text: %s", yytext);
 %%
 
 int
