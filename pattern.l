@@ -1,13 +1,16 @@
 %{
     #include <stdlib.h>
-    #include "y.tab.h"
     #include "objects.h"
+    #include "y.tab.h"
+    
     void yyerror(const char *errstr, ...);
+    VarTypeEnum getType(char *s);
 %}
 
 varname [a-zA-Z][a-zA-Z0-9]*
 number [1-9][0-9]*
 float64 [0-9]+\.[0-9]+
+type "int"|"float64"|"string"
 
 %%
 
@@ -25,6 +28,11 @@ float64 [0-9]+\.[0-9]+
 "if"            return IF;
 "else"          return ELSE;
 \".*\"          return STRING;
+
+{type}          {
+                    yylval.varType = getType(yytext);
+                    return TYPE;
+                }
 {varname}       {
                     yylval.stindex = strdup(yytext);
                     return VARIABLE;
@@ -49,4 +57,18 @@ float64 [0-9]+\.[0-9]+
 int
 yywrap(void){
     return 1;
+}
+
+VarTypeEnum
+getType(char *s){
+    if (strcmp(s, "int")) {
+        return INTEGER_T;
+    }
+    if (strcmp(s, "float64")) {
+        return FLOAT64_T;
+    }
+    if (strcmp(s, "string")) {
+        return STRING_T;
+    }
+    return -1;
 }
