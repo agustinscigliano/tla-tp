@@ -23,6 +23,8 @@
 #include "symtab.h"
 #include "objects.h"
 
+int yydebug = 1;
+
 void yyerror(const char *errstr, ...);
 int yylex(void);
 Node *newIntNode(int value);
@@ -31,14 +33,16 @@ Node *newStringNode(char *s);
 void freeNode(Node *np);
 Node *newIdNode(const char *id);
 Node *newOpNode(int operator, int nops, ...);
-int execute(Node *np);
+Node *newTypeNode(VarTypeEnum type);
+void execute(Node *np);
 void declareVariable(VarTypeEnum varType, char *varName);
 Variable* newVariable(VarTypeEnum varType);
 
 static int *aux;
 static int auxint;
+static Variable *auxvar;
 static Symtab *st;
-static int indentation;
+static int indentlevel;
 %}
 
 %union {
@@ -57,15 +61,16 @@ program:
 
 fn:
     prestmt fn  {execute($1); execute($2); freeNode($1); freeNode($2);}
-    | main      
+    | main      {execute($1); freeNode($1);}
     ;
 
 prestmt:
-    VARIABLE '=' expr ';'              {$$ = newOpNode('=', 2, newIdNode($1), $3);}
+    TYPE VARIABLE ';'                    {$$ = newOpNode(TYPE, 2, newTypeNode($1), newIdNode($2));}
+    | VARIABLE '=' expr ';'              {$$ = newOpNode('=', 2, newIdNode($1), $3);}
     ;
 
 main:
-    MAIN '(' ')' '{' stmt_list '}'                {$$ = newOpNode(MAIN, 1, $5);}
+    MAIN '(' ')' '{' stmt_list '}'     {$$ = newOpNode(MAIN, 1, $5);}
     ;
 
 stmt:
@@ -91,7 +96,7 @@ expr:
     | FLOAT64           {$$ = newFloat64Node($1);}
     | STRING            {$$ = newStringNode($1);}
     | VARIABLE          {$$ = newIdNode($1);}
-    | TYPE VARIABLE     {declareVariable($1, $2);}
+    | TYPE VARIABLE ';' {$$ = newOpNode(TYPE, 2, newTypeNode($1), newIdNode($2));}
     | '-' expr %prec UMINUS     {$$ = newOpNode(UMINUS, 1, $2);}
     | INC expr %prec INC        {$$ = newOpNode(INC, 1, $2);}
     | DEC expr %prec DEC        {$$ = newOpNode(DEC, 1, $2);}
@@ -115,6 +120,7 @@ newIntNode(int value){
     Node *np       = xmalloc(sizeof(*np));
     np->type       = INT_NODE;
     np->in.integer = value;
+    fprintf(stderr, "new int node:%d, dir: %d\n", value, np);
 
     return np;
 }
@@ -124,6 +130,7 @@ newFloat64Node(double value){
     Node *np         = xmalloc(sizeof(*np));
     np->type         = FLOAT64_NODE;
     np->f64n.float64 = value;
+    fprintf(stderr, "new float64 node:%f dir: %d\n", value, np);
 
     return np;
 }
@@ -142,6 +149,17 @@ newIdNode(const char *id){
     Node *np     = xmalloc(sizeof(*np));
     np->type     = ID_NODE;
     np->idn.name = strdup(id);
+    fprintf(stderr, "new id node:%s dir: %d\n", id, np);
+
+    return np;
+}
+
+Node *
+newTypeNode(VarTypeEnum type){
+    Node *np     = xmalloc(sizeof(*np));
+    np->type     = TYPE_NODE;
+    np->tn.type  = type;
+    fprintf(stderr, "new type node:%d dir: %d\n", type, np);
 
     return np;
 }
@@ -150,11 +168,14 @@ Node *
 newOpNode(int operator, int nops, ...){
     va_list ap;
 
-    Node *np = xmalloc(sizeof(*np));
-    np->opn.ops = xmalloc(nops * sizeof(np->opn.ops));
-    np->type = OPER_NODE;
+    Node *np     = xmalloc(sizeof(*np));
+    np->opn.ops  = xmalloc(nops * sizeof(np->opn.ops));
+    np->type     = OPER_NODE;
     np->opn.oper = operator;
     np->opn.nops = nops;
+
+    fprintf(stderr, "opnode: operator = %d, nops = %d, dir: %d\n", operator, nops, np);
+
     va_start(ap, nops);
     for(int i = 0; i < nops; i++)
         np->opn.ops[i] = va_arg(ap, Node*);
@@ -178,9 +199,12 @@ freeNode(Node *np){
     free(np);
 }
 
-int execute(Node *np) {
-    if (!np) return 0;
-switch(np->type){
+void 
+execute(Node *np) {
+    if (!np) 
+        return;
+    fprintf(stderr, "execute np: %d, type: %d\n", np, np->type);
+    switch(np->type){
     case INT_NODE: 
                 printf("%d ",np->in.integer);
             break;
@@ -193,26 +217,26 @@ switch(np->type){
     case ID_NODE:    
             aux = lookup(st, 0, np->idn.name, NULL);
             if(aux == NULL){
-                printf("int %s ",np->idn.name);
+                printf("int %s ", np->idn.name);
             } else {
-                printf("%s ",np->idn.name);
+                printf("%s ", np->idn.name);
             }
         break;
     case OPER_NODE:
         switch(np->opn.oper) {
         case MAIN:
-            printf("int main(void) {\n");
+            printf("int\nmain(void)");
+            //fprintf(stderr, "En MAIN: np->opn.opn.ops[0] = %d\n", np->opn.ops[0]);
             execute(np->opn.ops[0]);
-            printf("}\n");
             break;
         case WHILE:
             printf("while (");
             execute(np->opn.ops[0]);
-            printf(")\n { \n");
+            printf(")\n");
             execute(np->opn.ops[1]);
-            printf("} \n");
             break;
         case IF:
+            //fprintf(stderr, "En IF\n");
             printf("if (");
             execute(np->opn.ops[0]);
             printf(")");
@@ -222,10 +246,16 @@ switch(np->type){
                 execute(np->opn.ops[2]);
             } 
             break;
+        case TYPE:
+            fprintf(stderr, "EN TYPE\n");
+            declareVariable(np->opn.ops[0]->tn.type, np->opn.ops[1]->idn.name);
+            printf("%d %s;\n", np->opn.ops[0]->tn.type, np->opn.ops[1]->idn.name);
+            break;
         case SHOW:
             break;
         case '=':
-            auxvar = lookup(st, 0, np->opn.ops[0]->idn.name, NULL);
+            //fprintf(stderr, "En =\n");
+            auxvar = (Variable *) lookup(st, 0, np->opn.ops[0]->idn.name, NULL);
             if(auxvar == NULL)
                 die("variable %s undeclared\n", np->opn.ops[0]->idn.name);
             execute(np->opn.ops[0]);
@@ -237,11 +267,13 @@ switch(np->type){
             execute(np->opn.ops[0]);   
             break;
         case '{':
+            //fprintf(stderr, "En {\n");
             printf("{\n\t");
             execute(np->opn.ops[0]);
             printf("}");
             break;
         case ';':
+            //fprintf(stderr, "En ;\n");
             for(int i = 0; i < np->opn.nops; i++){
                 execute(np->opn.ops[i]);
                 printf("; \n");
@@ -319,15 +351,15 @@ switch(np->type){
             break;
             }
         }
-    return 0;
 }
 
 void
 declareVariable(VarTypeEnum varType, char *varName) {
-    Variable var = lookup(st, 0, varName, NULL);
-    if (var != NULL) {
+    Variable *vp = (Variable *)lookup(st, 0, varName, NULL);
+    if (vp != NULL) {
         die("Error: variable ya definida");
     }
+    fprintf(stderr, "%s declarada!\n", varName);
     lookup(st, 1, varName, newVariable(varType));
 }
 
@@ -342,7 +374,7 @@ void
 yyerror(const char *errstr, ...) {
     va_list ap;
 
-    va_start(ap, errstr);
+va_start(ap, errstr);
     vfprintf(stderr, errstr, ap);
     fprintf(stderr, "\n");
     va_end(ap);
@@ -350,7 +382,7 @@ yyerror(const char *errstr, ...) {
 
 int 
 main(void) {
-    indentation = 0;
+    indentlevel = 0;
     st = newsymboltable();
     yyparse();
     return 0;

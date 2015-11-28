@@ -1,5 +1,5 @@
 typedef enum {
-	ID_NODE, OPER_NODE, INT_NODE, FLOAT64_NODE, STRING_NODE
+	ID_NODE, OPER_NODE, TYPE_NODE, INT_NODE, FLOAT64_NODE, STRING_NODE
 } NodeTypeEnum;
 
 typedef struct Node Node;
@@ -9,6 +9,7 @@ enum VarTypeEnum {INTEGER_T, FLOAT64_T, STRING_T};
 
 typedef struct {
 	VarTypeEnum type;
+
 	union {
 		int integer;
 		double float64;
@@ -38,6 +39,10 @@ typedef struct {
 	char *name;
 } IdNode;
 
+typedef struct {
+	VarTypeEnum type;
+} TypeNode;
+
 struct Node {
 	NodeTypeEnum type;
 
@@ -45,6 +50,7 @@ struct Node {
         IntNode in;
 		Float64Node f64n;
 		StringNode sn;
+		TypeNode tn;
         IdNode idn;
         OpNode opn;
     };

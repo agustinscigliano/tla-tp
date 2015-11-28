@@ -49,7 +49,7 @@ freesymboltable(Symtab *table){
 /* lookup with optional insertion
  * See: The practice of programming, page 56
  */
-Variable *
+void *
 lookup(Symtab *table, int insert, char *key, void *value){
 	unsigned long h = hash(key, table->size);
 	Node *np = findnode(table->buckets[h], key);
