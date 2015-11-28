@@ -270,7 +270,7 @@ execute(Node *np) {
             break;
         case '{':
             //fprintf(stderr, "En {\n");
-            printf("{\n\t");
+            printf("{\n");
             execute(np->opn.ops[0]);
             printf("}");
             break;
@@ -278,7 +278,9 @@ execute(Node *np) {
             //fprintf(stderr, "En ;\n");
             for(int i = 0; i < np->opn.nops; i++){
                 execute(np->opn.ops[i]);
-                printf(";\n");
+                if (np->opn.ops[i]->opn.oper != ';') {
+                    printf(";\n");
+                }
             }
             break;
         case '+':
