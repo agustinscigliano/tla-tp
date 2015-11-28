@@ -195,13 +195,13 @@ execute(Node *np) {
         return;
     switch(np->type){
     case INT_NODE: 
-                printf("%d ",np->in.integer);
+                printf("%d", np->in.integer);
             break;
     case FLOAT64_NODE: 
-                printf("%f ",np->f64n.float64);
+                printf("%f", np->f64n.float64);
             break;
     case STRING_NODE: 
-                printf("%s ",np->sn.string);
+                printf("\"%s\"", np->sn.string);
             break;
     case ID_NODE:    
             auxint = lookup(st, 0, np->idn.name, NULL);
