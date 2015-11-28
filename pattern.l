@@ -27,8 +27,11 @@ type "int"|"float64"|"string"
 "while"         return WHILE;
 "if"            return IF;
 "else"          return ELSE;
-\".*\"          return STRING;
-
+\".*\"          {
+                    yylval.string = calloc(strlen(yytext)-1, sizeof(char));
+                    strncpy(yylval.string, &yytext[1], strlen(yytext)-2);
+                    return STRING;
+                }
 {type}          {
                     yylval.varType = getType(yytext);
                     return TYPE;

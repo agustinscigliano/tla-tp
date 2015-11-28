@@ -254,6 +254,27 @@ execute(Node *np) {
             printf("%s %s", getTypeString(np->opn.ops[0]->tn.type), np->opn.ops[1]->idn.name);
             break;
         case SHOW:
+            ;
+            Node *nodetoshow = np->opn.ops[0];
+            if(nodetoshow->type == STRING_NODE){
+                printf("printf(\"%s\\n\")", nodetoshow->sn.string);
+            }
+            else if(nodetoshow->type == ID_NODE){
+                Variable *v = lookup(st, 0, nodetoshow->idn.name, NULL);
+                if(!v)
+                    die("variable %s not in symtab\n", nodetoshow->idn.name);
+                switch(v->type){
+                case INTEGER_T:
+                    printf("printf(\"%d\\n\")", v->integer);
+                    break;
+                case FLOAT64_T:
+                    printf("printf(\"%f\\n\")", v->float64);
+                    break;
+                case STRING_T:
+                    printf("printf(\"%s\\n\")", v->string);
+                    break;
+                }
+            }
             break;
         case '=':
             //fprintf(stderr, "En =\n");
@@ -278,6 +299,7 @@ execute(Node *np) {
             //fprintf(stderr, "En ;\n");
             for(int i = 0; i < np->opn.nops; i++){
                 execute(np->opn.ops[i]);
+                //execute(np->opn.ops[0]);
                 printf(";\n");
             }
             break;
