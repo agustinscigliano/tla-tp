@@ -1,0 +1,18 @@
+int a;
+float f;
+string str;
+main(){
+    a = 8;
+    f = 3.4;
+    s = "texto\n";
+
+    while(a > 0){
+        a -= 1;
+        show a;
+    }
+
+    f = f + a;
+    if(f == f){
+        show s;
+    }
+}
