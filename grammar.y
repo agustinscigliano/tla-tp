@@ -365,9 +365,9 @@ getTypeString(VarTypeEnum type) {
     if (type == INTEGER_T)
         return "int";
     if (type == FLOAT64_T)
-        return "float64";
+        return "double";
     if (type == STRING_T)
-        return "string";
+        return "char*";
     return NULL;
 }
 

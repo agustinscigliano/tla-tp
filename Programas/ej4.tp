@@ -1,5 +1,5 @@
 int a;
-float f;
+float64 f;
 string str;
 main(){
     a = 8;
