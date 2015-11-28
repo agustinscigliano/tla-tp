@@ -18,32 +18,27 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <math.h>
 #include "util.h"
 #include "symtab.h"
 #include "objects.h"
 
-int yydebug = 1;
+void     yyerror(const char *errstr, ...);
+int      yylex(void);
+Node     *newIntNode(int value);
+Node     *newFloat64Node(double value);
+Node     *newStringNode(char *s);
+void     freeNode(Node *np);
+Node     *newIdNode(const char *id);
+Node     *newOpNode(int operator, int nops, ...);
+Node     *newTypeNode(VarTypeEnum type);
+void     execute(Node *np);
+void     declareVariable(VarTypeEnum varType, char *varName);
+Variable *newVariable(VarTypeEnum varType);
+char     *getTypeString(VarTypeEnum type);
 
-void yyerror(const char *errstr, ...);
-int yylex(void);
-Node *newIntNode(int value);
-Node *newFloat64Node(double value);
-Node *newStringNode(char *s);
-void freeNode(Node *np);
-Node *newIdNode(const char *id);
-Node *newOpNode(int operator, int nops, ...);
-Node *newTypeNode(VarTypeEnum type);
-void execute(Node *np);
-void declareVariable(VarTypeEnum varType, char *varName);
-Variable* newVariable(VarTypeEnum varType);
-char* getTypeString(VarTypeEnum type);
-
-static int *aux;
-static int auxint;
+static int *auxint;
 static Variable *auxvar;
 static Symtab *st;
-static int indentlevel;
 %}
 
 %union {
@@ -121,7 +116,6 @@ newIntNode(int value){
     Node *np       = xmalloc(sizeof(*np));
     np->type       = INT_NODE;
     np->in.integer = value;
-    //fprintf(stderr, "new int node:%d, dir: %d\n", value, np);
 
     return np;
 }
@@ -131,7 +125,6 @@ newFloat64Node(double value){
     Node *np         = xmalloc(sizeof(*np));
     np->type         = FLOAT64_NODE;
     np->f64n.float64 = value;
-    //fprintf(stderr, "new float64 node:%f dir: %d\n", value, np);
 
     return np;
 }
@@ -150,7 +143,6 @@ newIdNode(const char *id){
     Node *np     = xmalloc(sizeof(*np));
     np->type     = ID_NODE;
     np->idn.name = strdup(id);
-    //fprintf(stderr, "new id node:%s dir: %d\n", id, np);
 
     return np;
 }
@@ -160,7 +152,6 @@ newTypeNode(VarTypeEnum type){
     Node *np     = xmalloc(sizeof(*np));
     np->type     = TYPE_NODE;
     np->tn.type  = type;
-    //fprintf(stderr, "new type node:%d dir: %d\n", type, np);
 
     return np;
 }
@@ -174,8 +165,6 @@ newOpNode(int operator, int nops, ...){
     np->type     = OPER_NODE;
     np->opn.oper = operator;
     np->opn.nops = nops;
-
-    //fprintf(stderr, "opnode: operator = %d, nops = %d, dir: %d\n", operator, nops, np);
 
     va_start(ap, nops);
     for(int i = 0; i < nops; i++)
@@ -204,7 +193,6 @@ void
 execute(Node *np) {
     if (!np) 
         return;
-    //fprintf(stderr, "execute np: %d, type: %d\n", np, np->type);
     switch(np->type){
     case INT_NODE: 
                 printf("%d ",np->in.integer);
@@ -216,8 +204,8 @@ execute(Node *np) {
                 printf("%s ",np->sn.string);
             break;
     case ID_NODE:    
-            aux = lookup(st, 0, np->idn.name, NULL);
-            if(aux == NULL){
+            auxint = lookup(st, 0, np->idn.name, NULL);
+            if(auxint == NULL){
                 printf("int %s ", np->idn.name);
             } else {
                 printf("%s ", np->idn.name);
@@ -227,7 +215,6 @@ execute(Node *np) {
         switch(np->opn.oper) {
         case MAIN:
             printf("int\nmain(void)");
-            //fprintf(stderr, "En MAIN: np->opn.opn.ops[0] = %d\n", np->opn.ops[0]);
             execute(np->opn.ops[0]);
             printf("\n");
             break;
@@ -238,7 +225,6 @@ execute(Node *np) {
             execute(np->opn.ops[1]);
             break;
         case IF:
-            //fprintf(stderr, "En IF\n");
             printf("if (");
             execute(np->opn.ops[0]);
             printf(")");
@@ -249,7 +235,6 @@ execute(Node *np) {
             } 
             break;
         case TYPE:
-            //fprintf(stderr, "EN TYPE\n");
             declareVariable(np->opn.ops[0]->tn.type, np->opn.ops[1]->idn.name);
             printf("%s %s", getTypeString(np->opn.ops[0]->tn.type), np->opn.ops[1]->idn.name);
             break;
@@ -265,19 +250,18 @@ execute(Node *np) {
                     die("variable %s not in symtab\n", nodetoshow->idn.name);
                 switch(v->type){
                 case INTEGER_T:
-                    printf("printf(\"%d\\n\")", v->integer);
+                    printf("printf(\"%%d\\n\", %s)", nodetoshow->idn.name);
                     break;
                 case FLOAT64_T:
-                    printf("printf(\"%f\\n\")", v->float64);
+                    printf("printf(\"%%f\\n\", %s)", nodetoshow->idn.name);
                     break;
                 case STRING_T:
-                    printf("printf(\"%s\\n\")", v->string);
+                    printf("printf(\"%%s\\n\", %s)", nodetoshow->idn.name);
                     break;
                 }
             }
             break;
         case '=':
-            //fprintf(stderr, "En =\n");
             auxvar = (Variable *) lookup(st, 0, np->opn.ops[0]->idn.name, NULL);
             if(auxvar == NULL)
                 die("variable %s undeclared\n", np->opn.ops[0]->idn.name);
@@ -290,7 +274,6 @@ execute(Node *np) {
             execute(np->opn.ops[0]);   
             break;
         case '{':
-            //fprintf(stderr, "En {\n");
             printf("{\n");
             execute(np->opn.ops[0]);
             printf("}");
@@ -377,31 +360,27 @@ execute(Node *np) {
         }
 }
 
-char*
+char *
 getTypeString(VarTypeEnum type) {
-    if (type == INTEGER_T) {
+    if (type == INTEGER_T)
         return "int";
-    }
-    if (type == FLOAT64_T) {
+    if (type == FLOAT64_T)
         return "float64";
-    }
-    if (type == STRING_T) {
+    if (type == STRING_T)
         return "string";
-    }
     return NULL;
 }
 
 void
 declareVariable(VarTypeEnum varType, char *varName) {
     Variable *vp = (Variable *)lookup(st, 0, varName, NULL);
-    if (vp != NULL) {
+    if (vp != NULL)
         die("Error: variable ya definida");
-    }
-    //fprintf(stderr, "%s declarada!\n", varName);
+
     lookup(st, 1, varName, newVariable(varType));
 }
 
-Variable*
+Variable *
 newVariable(VarTypeEnum varType) {
     Variable *vp = xmalloc(sizeof(*vp));
     vp->type = varType;
@@ -412,7 +391,7 @@ void
 yyerror(const char *errstr, ...) {
     va_list ap;
 
-va_start(ap, errstr);
+    va_start(ap, errstr);
     vfprintf(stderr, errstr, ap);
     fprintf(stderr, "\n");
     va_end(ap);
@@ -420,7 +399,6 @@ va_start(ap, errstr);
 
 int 
 main(void) {
-    indentlevel = 0;
     st = newsymboltable();
     yyparse();
     return 0;

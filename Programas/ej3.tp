@@ -1,6 +1,12 @@
 main(){
     int a;
     a = 5;
+    float64 d;
+    d = 0.5;
+    string s;
+    s = "texto";
     show "hola";
     show a;
+    show d;
+    show s;
 }

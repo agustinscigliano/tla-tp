@@ -16,7 +16,6 @@ struct Node{
 	Node *next;
 };
 
-typedef struct Symtab Symtab;
 struct Symtab{
 	Node **buckets;
 	unsigned int size;
@@ -97,7 +96,6 @@ freebucketchain(Node *np){
 
 static unsigned long
 hash(char *key, int nbuckets){
-	unsigned long i;
 	unsigned long hashcode = 0;
 
 	for(int i = 0; key[i] != '\0'; i++)
