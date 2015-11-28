@@ -254,7 +254,7 @@ execute(Node *np) {
             printf("%s %s", getTypeString(np->opn.ops[0]->tn.type), np->opn.ops[1]->idn.name);
             break;
         case SHOW:
-            ;
+            ; /* mandatory empty statement because declarations aren't statements */
             Node *nodetoshow = np->opn.ops[0];
             if(nodetoshow->type == STRING_NODE){
                 printf("printf(\"%s\\n\")", nodetoshow->sn.string);
@@ -291,16 +291,16 @@ execute(Node *np) {
             break;
         case '{':
             //fprintf(stderr, "En {\n");
-            printf("{\n\t");
+            printf("{\n");
             execute(np->opn.ops[0]);
             printf("}");
             break;
         case ';':
-            //fprintf(stderr, "En ;\n");
             for(int i = 0; i < np->opn.nops; i++){
                 execute(np->opn.ops[i]);
-                //execute(np->opn.ops[0]);
-                printf(";\n");
+                if (np->opn.ops[i]->opn.oper != ';') {
+                    printf(";\n");
+                }
             }
             break;
         case '+':
