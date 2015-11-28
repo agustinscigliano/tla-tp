@@ -37,6 +37,7 @@ Node *newTypeNode(VarTypeEnum type);
 void execute(Node *np);
 void declareVariable(VarTypeEnum varType, char *varName);
 Variable* newVariable(VarTypeEnum varType);
+char* getTypeString(VarTypeEnum type);
 
 static int *aux;
 static int auxint;
@@ -228,6 +229,7 @@ execute(Node *np) {
             printf("int\nmain(void)");
             //fprintf(stderr, "En MAIN: np->opn.opn.ops[0] = %d\n", np->opn.ops[0]);
             execute(np->opn.ops[0]);
+            printf("\n");
             break;
         case WHILE:
             printf("while (");
@@ -249,7 +251,7 @@ execute(Node *np) {
         case TYPE:
             //fprintf(stderr, "EN TYPE\n");
             declareVariable(np->opn.ops[0]->tn.type, np->opn.ops[1]->idn.name);
-            printf("%d %s;\n", np->opn.ops[0]->tn.type, np->opn.ops[1]->idn.name);
+            printf("%s %s", getTypeString(np->opn.ops[0]->tn.type), np->opn.ops[1]->idn.name);
             break;
         case SHOW:
             break;
@@ -276,7 +278,7 @@ execute(Node *np) {
             //fprintf(stderr, "En ;\n");
             for(int i = 0; i < np->opn.nops; i++){
                 execute(np->opn.ops[i]);
-                printf("; \n");
+                printf(";\n");
             }
             break;
         case '+':
@@ -351,6 +353,20 @@ execute(Node *np) {
             break;
             }
         }
+}
+
+char*
+getTypeString(VarTypeEnum type) {
+    if (type == INTEGER_T) {
+        return "int";
+    }
+    if (type == FLOAT64_T) {
+        return "float64";
+    }
+    if (type == STRING_T) {
+        return "string";
+    }
+    return NULL;
 }
 
 void

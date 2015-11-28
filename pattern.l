@@ -61,13 +61,13 @@ yywrap(void){
 
 VarTypeEnum
 getType(char *s){
-    if (strcmp(s, "int")) {
+    if (!strcmp(s, "int")) {
         return INTEGER_T;
     }
-    if (strcmp(s, "float64")) {
+    if (!strcmp(s, "float64")) {
         return FLOAT64_T;
     }
-    if (strcmp(s, "string")) {
+    if (!strcmp(s, "string")) {
         return STRING_T;
     }
     return -1;
