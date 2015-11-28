@@ -70,7 +70,7 @@ prestmt:
     ;
 
 main:
-    MAIN '(' ')' '{' stmt_list '}'     {$$ = newOpNode(MAIN, 1, $5);}
+    MAIN '(' ')' '{' stmt_list '}'     {$$ = newOpNode(MAIN, 1, newOpNode('{', 1, $5));}
     ;
 
 stmt:
@@ -120,7 +120,7 @@ newIntNode(int value){
     Node *np       = xmalloc(sizeof(*np));
     np->type       = INT_NODE;
     np->in.integer = value;
-    fprintf(stderr, "new int node:%d, dir: %d\n", value, np);
+    //fprintf(stderr, "new int node:%d, dir: %d\n", value, np);
 
     return np;
 }
@@ -130,7 +130,7 @@ newFloat64Node(double value){
     Node *np         = xmalloc(sizeof(*np));
     np->type         = FLOAT64_NODE;
     np->f64n.float64 = value;
-    fprintf(stderr, "new float64 node:%f dir: %d\n", value, np);
+    //fprintf(stderr, "new float64 node:%f dir: %d\n", value, np);
 
     return np;
 }
@@ -149,7 +149,7 @@ newIdNode(const char *id){
     Node *np     = xmalloc(sizeof(*np));
     np->type     = ID_NODE;
     np->idn.name = strdup(id);
-    fprintf(stderr, "new id node:%s dir: %d\n", id, np);
+    //fprintf(stderr, "new id node:%s dir: %d\n", id, np);
 
     return np;
 }
@@ -159,7 +159,7 @@ newTypeNode(VarTypeEnum type){
     Node *np     = xmalloc(sizeof(*np));
     np->type     = TYPE_NODE;
     np->tn.type  = type;
-    fprintf(stderr, "new type node:%d dir: %d\n", type, np);
+    //fprintf(stderr, "new type node:%d dir: %d\n", type, np);
 
     return np;
 }
@@ -174,7 +174,7 @@ newOpNode(int operator, int nops, ...){
     np->opn.oper = operator;
     np->opn.nops = nops;
 
-    fprintf(stderr, "opnode: operator = %d, nops = %d, dir: %d\n", operator, nops, np);
+    //fprintf(stderr, "opnode: operator = %d, nops = %d, dir: %d\n", operator, nops, np);
 
     va_start(ap, nops);
     for(int i = 0; i < nops; i++)
@@ -203,7 +203,7 @@ void
 execute(Node *np) {
     if (!np) 
         return;
-    fprintf(stderr, "execute np: %d, type: %d\n", np, np->type);
+    //fprintf(stderr, "execute np: %d, type: %d\n", np, np->type);
     switch(np->type){
     case INT_NODE: 
                 printf("%d ",np->in.integer);
@@ -247,7 +247,7 @@ execute(Node *np) {
             } 
             break;
         case TYPE:
-            fprintf(stderr, "EN TYPE\n");
+            //fprintf(stderr, "EN TYPE\n");
             declareVariable(np->opn.ops[0]->tn.type, np->opn.ops[1]->idn.name);
             printf("%d %s;\n", np->opn.ops[0]->tn.type, np->opn.ops[1]->idn.name);
             break;
@@ -359,7 +359,7 @@ declareVariable(VarTypeEnum varType, char *varName) {
     if (vp != NULL) {
         die("Error: variable ya definida");
     }
-    fprintf(stderr, "%s declarada!\n", varName);
+    //fprintf(stderr, "%s declarada!\n", varName);
     lookup(st, 1, varName, newVariable(varType));
 }
 
