@@ -96,7 +96,7 @@ expr:
     | FLOAT64           {$$ = newFloat64Node($1);}
     | STRING            {$$ = newStringNode($1);}
     | VARIABLE          {$$ = newIdNode($1);}
-    | TYPE VARIABLE ';' {$$ = newOpNode(TYPE, 2, newTypeNode($1), newIdNode($2));}
+    | TYPE VARIABLE     {$$ = newOpNode(TYPE, 2, newTypeNode($1), newIdNode($2));}
     | '-' expr %prec UMINUS     {$$ = newOpNode(UMINUS, 1, $2);}
     | INC expr %prec INC        {$$ = newOpNode(INC, 1, $2);}
     | DEC expr %prec DEC        {$$ = newOpNode(DEC, 1, $2);}
