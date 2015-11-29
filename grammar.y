@@ -56,12 +56,11 @@ static Symtab *st;
 program: 
        main                            {execute($1); freeNode($1); exit(0);}
 main:
-    MAIN '(' ')' '{' stmt_list '}'     {$$ = newOpNode(MAIN, 1, newOpNode('{', 1, $5));}
+    MAIN '(' ')' stmt     {$$ = newOpNode(MAIN, 1, $4);}
     ;
 
 stmt:
-    ';'                                {$$ = newOpNode(';', 2, NULL, NULL);}
-    | expr ';'                         {$$ = newOpNode(';', 1, $1);}
+    expr ';'                         {$$ = newOpNode(';', 1, $1);}
     | VARIABLE '=' expr ';'            {$$ = newOpNode('=', 2, newIdNode($1), $3);}
     | VARIABLE ADDEQ expr ';'          {$$ = newOpNode(ADDEQ, 2, newIdNode($1), $3);}
     | VARIABLE SUBEQ expr ';'          {$$ = newOpNode(SUBEQ, 2, newIdNode($1), $3);}
@@ -73,8 +72,8 @@ stmt:
     ;
 
 stmt_list:
-         stmt                   {$$ = $1;}
-         | stmt_list stmt       {$$ = newOpNode(';', 2, $1, $2);}
+         stmt                   {$$ = newOpNode(';', 1, $1);}
+         | stmt stmt_list       {$$ = newOpNode(';', 2, $1, $2);}
          ;
 
 expr:

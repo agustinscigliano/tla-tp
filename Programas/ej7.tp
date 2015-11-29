@@ -1,0 +1,14 @@
+main(){
+    int a;
+    a = 1;
+
+    int b;
+    b = 5;
+
+    int c;
+    c = a + b;
+
+    float64 d;
+    d = (c*a) + b/2;
+    show d;
+}

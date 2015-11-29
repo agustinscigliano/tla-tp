@@ -1,4 +1,4 @@
-main(){
 int asd;
+main(){
 	asd = 4;
 }

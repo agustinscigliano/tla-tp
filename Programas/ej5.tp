@@ -1,15 +1,9 @@
 main(){
     int a;
-    a = 1;
-
-    int b;
-    b = 5;
-
-    int c;
-    c = a + b;
-
-    float64 d;
-    d = (c*a) + b/2;
-    show d;
+    a = 5;
+    show "a vale 5";
+    while(a == 5){
+        a += 7;
+        show a;
+    }
 }
-
