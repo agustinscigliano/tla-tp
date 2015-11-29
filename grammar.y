@@ -200,9 +200,13 @@ execute(Node *np) {
                 printf("%s ", np->idn.name);
             }
         break;
+    case TYPE_NODE:
+            /*should not implement*/
+            break;
     case OPER_NODE:
         switch(np->opn.oper) {
         case MAIN:
+            printf("#include <stdio.h>\n");
             printf("int\nmain(void)");
             execute(np->opn.ops[0]);
             printf("\n");
