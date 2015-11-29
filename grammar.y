@@ -12,7 +12,7 @@
 %left '*' '/'
 %nonassoc UMINUS INC DEC
 
-%type <np> fn stmt expr stmt_list prestmt main
+%type <np> stmt expr stmt_list main
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +21,7 @@
 #include "util.h"
 #include "symtab.h"
 #include "objects.h"
+//int yydebug = 1;
 
 void     yyerror(const char *errstr, ...);
 int      yylex(void);
@@ -53,19 +54,7 @@ static Symtab *st;
 %%
 /*--------------------------------------------------------*/
 program: 
-       fn {exit(0);}
-       ;
-
-fn:
-    prestmt fn  {execute($1); execute($2); freeNode($1); freeNode($2);}
-    | main      {execute($1); freeNode($1);}
-    ;
-
-prestmt:
-    TYPE VARIABLE ';'                    {$$ = newOpNode(';', 1, newOpNode(TYPE, 2, newTypeNode($1), newIdNode($2)));}
-    | VARIABLE '=' expr ';'              {$$ = newOpNode('=', 2, newIdNode($1), $3);}
-    ;
-
+       main                            {execute($1); freeNode($1); exit(0);}
 main:
     MAIN '(' ')' '{' stmt_list '}'     {$$ = newOpNode(MAIN, 1, newOpNode('{', 1, $5));}
     ;
@@ -378,7 +367,6 @@ declareVariable(VarTypeEnum varType, char *varname) {
     if (vp != NULL)
         die("Error: variable ya definida");
 
-fprintf(stderr, "var definida: %s\n", varname);
     lookup(st, 1, varname, newVariable(varType));
 }
 
