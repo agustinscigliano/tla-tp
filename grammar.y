@@ -66,7 +66,7 @@ prestmt:
     ;
 
 main:
-    MAIN '(' ')' '{' stmt_list '}'     {$$ = newOpNode(MAIN, 1, newOpNode('{', 1, $5));}
+    MAIN '(' ')' stmt     {$$ = newOpNode(MAIN, 1, $4);}
     ;
 
 stmt:
@@ -84,7 +84,7 @@ stmt:
 
 stmt_list:
          stmt                   {$$ = $1;}
-         | stmt_list stmt       {$$ = newOpNode(';', 2, $1, $2);}
+         | stmt stmt_list       {$$ = newOpNode(';', 2, $1, $2);}
          ;
 
 expr:
@@ -281,6 +281,7 @@ execute(Node *np) {
         case ';':
             for(int i = 0; i < np->opn.nops; i++){
                 execute(np->opn.ops[i]);
+                //printf("El caracter es %c\n", (np->opn.ops[i]->opn.oper)-'a');
                 if (np->opn.ops[i]->opn.oper != ';') {
                     printf(";\n");
                 }
