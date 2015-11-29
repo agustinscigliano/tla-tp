@@ -39,11 +39,12 @@ char     *getTypeString(VarTypeEnum type);
 static int *auxint;
 static Variable *auxvar;
 static Symtab *st;
+
 %}
 
 %union {
     char *stindex;      /* symbol table index */
-    int intval;         /* integer value */
+    int intval;
     double doubleval;
     char *string;
     enum VarTypeEnum varType;
@@ -377,6 +378,7 @@ declareVariable(VarTypeEnum varType, char *varName) {
     if (vp != NULL)
         die("Error: variable ya definida");
 
+fprintf(stderr, "var definida!!!!!!!!!\n");
     lookup(st, 1, varName, newVariable(varType));
 }
 
