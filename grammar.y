@@ -95,7 +95,7 @@ expr:
     | expr LE expr              {$$ = newOpNode(LE, 2, $1, $3);}
     | expr NE expr              {$$ = newOpNode(NE, 2, $1, $3);}
     | expr EQ expr              {$$ = newOpNode(EQ, 2, $1, $3);}
-    | '(' expr ')'              {$$ = $2;}
+    | '(' expr ')'              {$$ = newOpNode('(', 1, $2);}
     ;
 %%
 /*--------------------------------------------------------*/
@@ -267,6 +267,13 @@ execute(Node *np) {
             execute(np->opn.ops[0]);
             printf("}");
             break;
+
+        case '(':
+            printf("(");
+            execute(np->opn.ops[0]);
+            printf(")");
+            break;
+
         case ';':
             for(int i = 0; i < np->opn.nops; i++){
                 execute(np->opn.ops[i]);
