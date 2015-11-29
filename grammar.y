@@ -71,8 +71,7 @@ main:
     ;
 
 stmt:
-    ';'                                {$$ = newOpNode(';', 2, NULL, NULL);}
-    | expr ';'                         {$$ = newOpNode(';', 1, $1);}
+    expr ';'                         {$$ = newOpNode(';', 1, $1);}
     | VARIABLE '=' expr ';'            {$$ = newOpNode('=', 2, newIdNode($1), $3);}
     | VARIABLE ADDEQ expr ';'          {$$ = newOpNode(ADDEQ, 2, newIdNode($1), $3);}
     | VARIABLE SUBEQ expr ';'          {$$ = newOpNode(SUBEQ, 2, newIdNode($1), $3);}
@@ -84,7 +83,7 @@ stmt:
     ;
 
 stmt_list:
-         stmt                   {$$ = $1;}
+         stmt                   {$$ = newOpNode(';', 1, $1);}
          | stmt stmt_list       {$$ = newOpNode(';', 2, $1, $2);}
          ;
 
@@ -282,7 +281,6 @@ execute(Node *np) {
         case ';':
             for(int i = 0; i < np->opn.nops; i++){
                 execute(np->opn.ops[i]);
-                //printf("El caracter es %c\n", (np->opn.ops[i]->opn.oper)-'a');
                 if (np->opn.ops[i]->opn.oper != ';') {
                     printf(";\n");
                 }
