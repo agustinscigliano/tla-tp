@@ -32,7 +32,7 @@ Node     *newIdNode(const char *id);
 Node     *newOpNode(int operator, int nops, ...);
 Node     *newTypeNode(VarTypeEnum type);
 void     execute(Node *np);
-void     declareVariable(VarTypeEnum varType, char *varName);
+void     declareVariable(VarTypeEnum varType, char *varname);
 Variable *newVariable(VarTypeEnum varType);
 char     *getTypeString(VarTypeEnum type);
 
@@ -62,7 +62,7 @@ fn:
     ;
 
 prestmt:
-    TYPE VARIABLE ';'                    {$$ = newOpNode(TYPE, 2, newTypeNode($1), newIdNode($2));}
+    TYPE VARIABLE ';'                    {$$ = newOpNode(';', 1, newOpNode(TYPE, 2, newTypeNode($1), newIdNode($2)));}
     | VARIABLE '=' expr ';'              {$$ = newOpNode('=', 2, newIdNode($1), $3);}
     ;
 
@@ -237,7 +237,7 @@ execute(Node *np) {
             break;
         case TYPE:
             declareVariable(np->opn.ops[0]->tn.type, np->opn.ops[1]->idn.name);
-            printf("%s %s", getTypeString(np->opn.ops[0]->tn.type), np->opn.ops[1]->idn.name);
+            printf("%s%s", getTypeString(np->opn.ops[0]->tn.type), np->opn.ops[1]->idn.name);
             break;
         case SHOW:
             ; /* mandatory empty statement because declarations aren't statements */
@@ -364,22 +364,22 @@ execute(Node *np) {
 char *
 getTypeString(VarTypeEnum type) {
     if (type == INTEGER_T)
-        return "int";
+        return "int ";
     if (type == FLOAT64_T)
-        return "double";
+        return "double ";
     if (type == STRING_T)
-        return "char*";
+        return "char *";
     return NULL;
 }
 
 void
-declareVariable(VarTypeEnum varType, char *varName) {
-    Variable *vp = (Variable *)lookup(st, 0, varName, NULL);
+declareVariable(VarTypeEnum varType, char *varname) {
+    Variable *vp = (Variable *)lookup(st, 0, varname, NULL);
     if (vp != NULL)
         die("Error: variable ya definida");
 
-fprintf(stderr, "var definida!!!!!!!!!\n");
-    lookup(st, 1, varName, newVariable(varType));
+fprintf(stderr, "var definida: %s\n", varname);
+    lookup(st, 1, varname, newVariable(varType));
 }
 
 Variable *
